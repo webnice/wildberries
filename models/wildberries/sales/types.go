@@ -6,8 +6,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/webnice/wildberries/v1/modules/communication"
-	wildberriesTypes "github.com/webnice/wildberries/v1/types"
+	"github.com/webnice/wildberries/modules/communication"
+	wildberriesTypes "github.com/webnice/wildberries/types"
 )
 
 // Interface is an interface of package

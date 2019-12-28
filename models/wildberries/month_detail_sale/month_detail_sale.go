@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/webnice/wildberries/v1/modules/communication"
-	wildberriesTypes "github.com/webnice/wildberries/v1/types"
+	"github.com/webnice/wildberries/modules/communication"
+	wildberriesTypes "github.com/webnice/wildberries/types"
 
 	"gopkg.in/webnice/transport.v2/request"
 	"gopkg.in/webnice/web.v1/header"

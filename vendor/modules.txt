@@ -15,4 +15,5 @@ gopkg.in/webnice/transport.v2/request
 gopkg.in/webnice/transport.v2/response
 # gopkg.in/webnice/web.v1 v1.0.0-20191216092242-ada2b8f44435
 gopkg.in/webnice/web.v1/header
+gopkg.in/webnice/web.v1/mime
 gopkg.in/webnice/web.v1/status
