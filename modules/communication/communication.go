@@ -9,11 +9,23 @@ import (
 
 	"gopkg.in/webnice/transport.v2"
 	"gopkg.in/webnice/transport.v2/content"
+	"gopkg.in/webnice/transport.v2/methods"
 	"gopkg.in/webnice/transport.v2/request"
 	"gopkg.in/webnice/transport.v2/response"
 	"gopkg.in/webnice/web.v1/header"
 	"gopkg.in/webnice/web.v1/status"
 )
+
+// New creates a new object and return interface
+func New() Interface {
+	var com = &impl{
+		singleton: newTransport(),
+	}
+	return com
+}
+
+// Errors Ошибки известного состояни, которые могут вернуть функции пакета
+func (com *impl) Errors() *Error { return Errors() }
 
 func newTransport() transport.Interface {
 	return transport.New().
@@ -26,20 +38,29 @@ func newTransport() transport.Interface {
 }
 
 // Transport Готовый к использованию интерфейс коммуникации с сервером
-func Transport() transport.Interface {
-	if singleton == nil {
-		singleton = newTransport()
-	}
-	return singleton
+func (com *impl) Transport() transport.Interface { return com.singleton }
+
+// NewRequestBaseJSON Базовый метод создания объекта запроса
+func (com *impl) NewRequestBaseJSON(uri string, mtd methods.Value) (ret request.Interface) {
+	ret = com.Transport().RequestGet().
+		Accept(AcceptJSON).
+		AcceptEncoding(AcceptEncoding).
+		AcceptLanguage(AcceptLanguage).
+		UserAgent(UserAgent).
+		Method(mtd).
+		URL(uri)
+	ret.Header().Add(header.CacheControl, CacheControl)
+
+	return
 }
 
 // RequestResponse Выполнение запроса, ожидание и получение результата
-func RequestResponse(req request.Interface) (ret response.Interface, err error) {
+func (com *impl) RequestResponse(req request.Interface) (ret response.Interface, err error) {
 	// DEBUG
 	//req.DebugFunc(func(d []byte) { log.Debug(string(d)) })
 	// DEBUG
 	// Выполнение запроса
-	singleton.Do(req)
+	com.Transport().Do(req)
 	// Ожидание ответа
 	if err = req.Done().Error(); err != nil {
 		err = fmt.Errorf("execute request error: %s", err)
@@ -67,10 +88,10 @@ func RequestResponse(req request.Interface) (ret response.Interface, err error) 
 }
 
 // RequestResponseStatusCode Выполнение запроса, ожидание и получение результата в виде HTTP статуса
-func RequestResponseStatusCode(req request.Interface) (ret int, err error) {
+func (com *impl) RequestResponseStatusCode(req request.Interface) (ret int, err error) {
 	var rsp response.Interface
 
-	if rsp, err = RequestResponse(req); err != nil {
+	if rsp, err = com.RequestResponse(req); err != nil {
 		return
 	}
 	ret = rsp.StatusCode()
@@ -83,13 +104,13 @@ func RequestResponseStatusCode(req request.Interface) (ret int, err error) {
 }
 
 // RequestResponsePlainText Выполнение запроса, ожидание и получение результата в виде текста
-func RequestResponsePlainText(req request.Interface) (ret *bytes.Buffer, err error) {
+func (com *impl) RequestResponsePlainText(req request.Interface) (ret *bytes.Buffer, err error) {
 	var (
 		rsp response.Interface
 		cnt content.Interface
 	)
 
-	if rsp, err = RequestResponse(req); err != nil {
+	if rsp, err = com.RequestResponse(req); err != nil {
 		return
 	}
 	ret, cnt = &bytes.Buffer{}, rsp.Content()
@@ -109,13 +130,13 @@ func RequestResponsePlainText(req request.Interface) (ret *bytes.Buffer, err err
 }
 
 // RequestResponseJSON Выполнение запроса, ожидание и получение результата в виде JSON
-func RequestResponseJSON(req request.Interface, data interface{}) (err error) {
+func (com *impl) RequestResponseJSON(req request.Interface, data interface{}) (err error) {
 	var (
 		rsp response.Interface
 		cnt content.Interface
 	)
 
-	if rsp, err = RequestResponse(req); err != nil {
+	if rsp, err = com.RequestResponse(req); err != nil {
 		return
 	}
 	cnt = rsp.Content()
