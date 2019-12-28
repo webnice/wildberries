@@ -1,0 +1,18 @@
+# golang.org/x/text v0.3.2
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/transform
+# gopkg.in/webnice/transport.v2 v2.0.0-20191218081213-abe3eb39584c
+gopkg.in/webnice/transport.v2
+gopkg.in/webnice/transport.v2/charmap
+gopkg.in/webnice/transport.v2/content
+gopkg.in/webnice/transport.v2/data
+gopkg.in/webnice/transport.v2/header
+gopkg.in/webnice/transport.v2/methods
+gopkg.in/webnice/transport.v2/request
+gopkg.in/webnice/transport.v2/response
+# gopkg.in/webnice/web.v1 v1.0.0-20191216092242-ada2b8f44435
+gopkg.in/webnice/web.v1/header
+gopkg.in/webnice/web.v1/status
