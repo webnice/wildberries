@@ -71,9 +71,10 @@ func (inc *impl) getFrom(fromAt ...time.Time) (ret time.Time) {
 // or starting from the date and time set by the From function
 func (inc *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Income, err error) {
 	const (
-		urn     = `%s/incomes`
-		keyDate = `dateFrom`
-		keyApi  = `key`
+		urn         = `%s/incomes`
+		keyDate     = `dateFrom`
+		keyApi      = `key`
+		rawQueryFmt = `%s=%s&%s=%s`
 	)
 	var (
 		req  request.Interface
@@ -87,8 +88,11 @@ func (inc *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Income, er
 		err = fmt.Errorf("can't create request URI, error: %s", err)
 		return
 	}
-	uri.Query().Set(keyDate, from.Format(time.RFC3339))
-	uri.Query().Set(keyApi, inc.apiKey)
+	uri.RawQuery = fmt.Sprintf(
+		rawQueryFmt,
+		keyDate, from.In(wildberriesTypes.WildberriesTimezoneLocal).Format(wildberriesNonRFC3339TimeFormat),
+		keyApi, url.QueryEscape(inc.apiKey),
+	)
 	// Создание запроса
 	req = inc.com.NewRequestBaseJSON(uri.String(), inc.com.Transport().Method().Get())
 	defer inc.com.Transport().RequestPut(req)

@@ -69,9 +69,10 @@ func (stk *impl) getFrom(fromAt ...time.Time) (ret time.Time) {
 // or starting from the date and time set by the From function
 func (stk *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Stock, err error) {
 	const (
-		urn     = `%s/stocks`
-		keyDate = `dateFrom`
-		keyApi  = `key`
+		urn         = `%s/stocks`
+		keyDate     = `dateFrom`
+		keyApi      = `key`
+		rawQueryFmt = `%s=%s&%s=%s`
 	)
 	var (
 		req  request.Interface
@@ -85,8 +86,11 @@ func (stk *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Stock, err
 		err = fmt.Errorf("can't create request URI, error: %s", err)
 		return
 	}
-	uri.Query().Set(keyDate, from.Format(time.RFC3339))
-	uri.Query().Set(keyApi, stk.apiKey)
+	uri.RawQuery = fmt.Sprintf(
+		rawQueryFmt,
+		keyDate, from.In(wildberriesTypes.WildberriesTimezoneLocal).Format(wildberriesNonRFC3339TimeFormat),
+		keyApi, url.QueryEscape(stk.apiKey),
+	)
 	// Создание запроса
 	req = stk.com.NewRequestBaseJSON(uri.String(), stk.com.Transport().Method().Get())
 	defer stk.com.Transport().RequestPut(req)

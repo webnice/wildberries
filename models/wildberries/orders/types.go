@@ -10,6 +10,8 @@ import (
 	wildberriesTypes "github.com/webnice/wildberries/types"
 )
 
+const wildberriesNonRFC3339TimeFormat = `2006-01-02T15:04:05`
+
 // Interface is an interface of package
 type Interface interface {
 	// WithContext Using context to interrupt requests to service

@@ -14,12 +14,15 @@ import (
 )
 
 const (
-	serviceURL   = ` https://suppliers-stats.wildberries.ru` // URL сервиса wildberries
-	serviceURNv1 = `%s/api/v1/supplier`                      // URN адрес ресурса - версия ресурса
+	serviceURL   = `https://suppliers-stats.wildberries.ru` // URL сервиса wildberries
+	serviceURNv1 = `%s/api/v1/supplier`                     // URN адрес ресурса - версия ресурса
 )
 
 // Interface is an interface of package
 type Interface interface {
+	// From Set of date and time of the beginning of the period for data request
+	From(from time.Time) Interface
+
 	// Incomes methods of reports about supply
 	Incomes() incomes.Interface
 

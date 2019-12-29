@@ -146,7 +146,10 @@ func (com *impl) RequestResponseJSON(req request.Interface, data interface{}) (e
 	if strings.EqualFold(rsp.Header().Get(header.ContentEncoding), EncodingDeflate) {
 		cnt = cnt.UnFlate()
 	}
-	err = cnt.UnmarshalJSON(data)
+	if err = cnt.UnmarshalJSON(data); err != nil {
+		err = fmt.Errorf("json unmarshal error: %s", err)
+		return
+	}
 	// DEBUG
 	//req.Response().Content().BackToBegin()
 	//log.Debug(req.Response().Content().String())

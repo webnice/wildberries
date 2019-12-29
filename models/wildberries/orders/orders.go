@@ -74,11 +74,13 @@ func (ods *impl) Report(onThisDay bool, fromAt ...time.Time) (ret []*wildberries
 		keyDate      = `dateFrom`
 		keyApi       = `key`
 		keyOnThisDay = `flag`
+		rawQueryFmt  = `%s=%s&%s=%s&%s=%s`
 	)
 	var (
-		req  request.Interface
-		from time.Time
-		uri  *url.URL
+		req     request.Interface
+		from    time.Time
+		uri     *url.URL
+		flagKey string
 	)
 
 	// Подготовка данных
@@ -87,12 +89,15 @@ func (ods *impl) Report(onThisDay bool, fromAt ...time.Time) (ret []*wildberries
 		err = fmt.Errorf("can't create request URI, error: %s", err)
 		return
 	}
-	uri.Query().Set(keyDate, from.Format(time.RFC3339))
-	uri.Query().Set(keyApi, ods.apiKey)
-	uri.Query().Set(keyOnThisDay, "0")
-	if onThisDay {
-		uri.Query().Set(keyOnThisDay, "1")
+	if flagKey = "0"; onThisDay {
+		flagKey = "1"
 	}
+	uri.RawQuery = fmt.Sprintf(
+		rawQueryFmt,
+		keyDate, from.In(wildberriesTypes.WildberriesTimezoneLocal).Format(wildberriesNonRFC3339TimeFormat),
+		keyApi, url.QueryEscape(ods.apiKey),
+		keyOnThisDay, flagKey,
+	)
 	// Создание запроса
 	req = ods.com.NewRequestBaseJSON(uri.String(), ods.com.Transport().Method().Get())
 	defer ods.com.Transport().RequestPut(req)

@@ -74,11 +74,13 @@ func (mds *impl) Report(
 	fromAt ...time.Time,
 ) (ret []*wildberriesTypes.MonthDetailSale, err error) {
 	const (
-		urn      = `%s/reportDetailMart`
-		keyDate  = `dateFrom`
-		keyApi   = `key`
-		keyLimit = `limit`
-		keyRowID = `rrdid`
+		urn            = `%s/reportDetailMart`
+		keyDate        = `dateFrom`
+		keyApi         = `key`
+		keyLimit       = `limit`
+		keyRowID       = `rrdid`
+		rawQueryFmt    = `%s=%s&%s=%s`
+		rawQueryAddFmt = `&%s=%s`
 	)
 	var (
 		req  request.Interface
@@ -92,13 +94,16 @@ func (mds *impl) Report(
 		err = fmt.Errorf("can't create request URI, error: %s", err)
 		return
 	}
-	uri.Query().Set(keyDate, from.Format(time.RFC3339))
-	uri.Query().Set(keyApi, mds.apiKey)
+	uri.RawQuery = fmt.Sprintf(
+		rawQueryFmt,
+		keyDate, from.In(wildberriesTypes.WildberriesTimezoneLocal).Format(wildberriesNonRFC3339TimeFormat),
+		keyApi, url.QueryEscape(mds.apiKey),
+	)
 	if rowID > 0 {
-		uri.Query().Set(keyRowID, strconv.FormatUint(rowID, 10))
+		uri.RawQuery += fmt.Sprintf(rawQueryAddFmt, keyRowID, strconv.FormatUint(rowID, 10))
 	}
 	if limit > 0 {
-		uri.Query().Set(keyLimit, strconv.FormatUint(limit, 10))
+		uri.RawQuery += fmt.Sprintf(rawQueryAddFmt, keyLimit, strconv.FormatUint(limit, 10))
 	}
 	// Создание запроса
 	req = mds.com.NewRequestBaseJSON(uri.String(), mds.com.Transport().Method().Get())

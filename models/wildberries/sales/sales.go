@@ -76,11 +76,13 @@ func (sle *impl) Report(onThisDay bool, fromAt ...time.Time) (ret []*wildberries
 		keyDate      = `dateFrom`
 		keyApi       = `key`
 		keyOnThisDay = `flag`
+		rawQueryFmt  = `%s=%s&%s=%s&%s=%s`
 	)
 	var (
-		req  request.Interface
-		from time.Time
-		uri  *url.URL
+		req     request.Interface
+		from    time.Time
+		uri     *url.URL
+		flagKey string
 	)
 
 	// Подготовка данных
@@ -89,12 +91,15 @@ func (sle *impl) Report(onThisDay bool, fromAt ...time.Time) (ret []*wildberries
 		err = fmt.Errorf("can't create request URI, error: %s", err)
 		return
 	}
-	uri.Query().Set(keyDate, from.Format(time.RFC3339))
-	uri.Query().Set(keyApi, sle.apiKey)
-	uri.Query().Set(keyOnThisDay, "0")
-	if onThisDay {
-		uri.Query().Set(keyOnThisDay, "1")
+	if flagKey = "0"; onThisDay {
+		flagKey = "1"
 	}
+	uri.RawQuery = fmt.Sprintf(
+		rawQueryFmt,
+		keyDate, from.In(wildberriesTypes.WildberriesTimezoneLocal).Format(wildberriesNonRFC3339TimeFormat),
+		keyApi, url.QueryEscape(sle.apiKey),
+		keyOnThisDay, flagKey,
+	)
 	// Создание запроса
 	req = sle.com.NewRequestBaseJSON(uri.String(), sle.com.Transport().Method().Get())
 	defer sle.com.Transport().RequestPut(req)
