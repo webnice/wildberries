@@ -56,9 +56,11 @@ func (m *impl) Connect() Value {
 
 // Parse string and return method interface
 func (m *impl) Parse(inp string) Value {
-	var tmp string
-	var key Type
-	var ret *methodType
+	var (
+		tmp string
+		key Type
+		ret *methodType
+	)
 
 	tmp = strings.ToUpper(inp)
 	for key = range maps {

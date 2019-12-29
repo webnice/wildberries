@@ -8,13 +8,17 @@ import (
 
 // New creates a new object and return interface
 func New(item ...http.Header) Interface {
-	var i int
-	var hdr = new(impl)
+	var (
+		i   int
+		hdr = new(impl)
+	)
+
 	for i = range item {
 		hdr.Header = item[i]
 		return hdr
 	}
 	hdr.Header = make(http.Header)
+
 	return hdr
 }
 

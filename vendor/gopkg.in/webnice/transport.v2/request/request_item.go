@@ -4,6 +4,7 @@ package request
 //import "gopkg.in/webnice/log.v2"
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -24,6 +25,16 @@ func (r *Request) Cancel() Interface { r.contextCancelFunc(); return r }
 
 // Done Waiting for the request to finish
 func (r *Request) Done() Interface { <-r.context.Done(); return r }
+
+// DoneWithContext Waiting for a request to complete, with the ability to interrupt the request through the context
+func (r *Request) DoneWithContext(ctx context.Context) Interface {
+	select {
+	case <-r.context.Done():
+	case <-ctx.Done():
+		r.Cancel()
+	}
+	return r
+}
 
 // Error Return latest error
 func (r *Request) Error() error { return r.err }
@@ -179,7 +190,7 @@ func (r *Request) MakeRequest() (err error) {
 		}
 		r.requestDataInterface = nil
 	}
-	r.request, err = http.NewRequest(r.method.String(), r.url.String(), r.requestDataInterface)
+	r.request, err = http.NewRequestWithContext(r.context, r.method.String(), r.url.String(), r.requestDataInterface)
 
 	return
 }

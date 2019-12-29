@@ -9,9 +9,11 @@ import (
 // Отображение запроса в дебаг режиме
 func (r *Request) debugRequest(data []byte) {
 	const prefixKey = `> `
-	var buf []byte
-	var tmp [][]byte
-	var i int
+	var (
+		buf []byte
+		tmp [][]byte
+		i   int
+	)
 
 	defer func() { _ = recover() }()
 	tmp, buf = bytes.Split(data, []byte("\n")), buf[:0]

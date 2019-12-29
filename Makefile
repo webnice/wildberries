@@ -48,7 +48,7 @@ lint:
 		--enable-all \
 		--disable nakedret \
 		--disable gochecknoinits \
-    --disable goimports \
+		--disable goimports \
 		--disable maligned \
 		./...; \
 .PHONY: lint

@@ -4,7 +4,7 @@ golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/transform
-# gopkg.in/webnice/transport.v2 v2.0.0-20191218081213-abe3eb39584c
+# gopkg.in/webnice/transport.v2 v2.0.0-20191229145902-700a50650d09
 gopkg.in/webnice/transport.v2
 gopkg.in/webnice/transport.v2/charmap
 gopkg.in/webnice/transport.v2/content

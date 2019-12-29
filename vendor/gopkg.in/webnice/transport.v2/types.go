@@ -26,7 +26,7 @@ const (
 	defaultTLSHandshakeTimeout           = 10 * time.Second // Specifies the maximum amount of time waiting to wait for a TLS handshake. Zero means no timeout
 	defaultTLSInsecureSkipVerify         = false            // Enables skip verify TLS certificate
 	defaultDialContextDualStack          = true             // Enables RFC 6555-compliant "Happy Eyeballs" dialing when the network is "tcp" and the host in the address parameter resolves to both IPv4 and IPv6 addresses
-	requestChanBuffer                    = int(1000)        // Размер буфера канала задач
+	requestChanBuffer                    = int(1000)        // Task channel buffer size
 )
 
 // ProxyFunc Is an a function to return a proxy for a given Request

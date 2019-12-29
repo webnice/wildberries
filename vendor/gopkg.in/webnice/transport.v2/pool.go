@@ -12,9 +12,11 @@ import (
 
 // Создание и запуск пула воркеров для обслуживания запросов
 func (trt *impl) makePool() {
-	var i uint16
-	var ctx context.Context
-	var ctxCancelFunc context.CancelFunc
+	var (
+		i             uint16
+		ctx           context.Context
+		ctxCancelFunc context.CancelFunc
+	)
 
 	// Если воркеры пула запущены, то выход
 	if trt.requestPoolStarted.Load().(bool) {

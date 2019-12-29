@@ -32,6 +32,9 @@ type Interface interface {
 	// Done Waiting for the request to finish
 	Done() Interface
 
+	// DoneWithContext Waiting for a request to complete, with the ability to interrupt the request through the context
+	DoneWithContext(ctx context.Context) Interface
+
 	// Error Return latest error
 	Error() error
 
