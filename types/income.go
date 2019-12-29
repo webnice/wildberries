@@ -1,8 +1,5 @@
 package types
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-
 // Income Структура данных отчёта валберис "Поставки"
 type Income struct {
 	ID            uint64          `json:"incomeId"`        // Уникальный идентификатор поставки

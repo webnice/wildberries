@@ -1,8 +1,5 @@
 package types
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-
 // Sale Структура данных отчёта валберис "Продажи"
 type Sale struct {
 	ID                string          `json:"number"`            // Номер документа

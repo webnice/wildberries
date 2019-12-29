@@ -1,8 +1,5 @@
 package types
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-
 // Stock Структура данных отчёта валберис "Склад"
 type Stock struct {
 	ChangeAt            WildberriesTime `json:"lastChangeDate"`      // Дата и время последнего обновления информации отчёта в сервисе

@@ -13,30 +13,32 @@ const (
 	wildberriesLocalLocation = `Europe/Moscow`
 	fatalErrorInTime         = `Library error, parse location failed with error: `
 	yearError                = `RFC 3339 is clear that years are 4 digits exactly. Year outside of range [0,9999]`
+	quoteTime                = '"'
+
 	// Форматы даты и времени валберис, стандартные RFC и локальные валберис
-	wbLayout00 = time.RFC3339Nano                 // RFC с указанием таймзоны
-	wbLayout01 = time.RFC3339                     // RFC с указанием таймзоны
-	wbLayout02 = `2006-01-02T15:04:05.999999999`  // Не RFC, локальная валберис
-	wbLayout03 = `2006-01-02T15:04:05.99999999`   // Не RFC, локальная валберис
-	wbLayout04 = `2006-01-02T15:04:05.9999999`    // Не RFC, локальная валберис
-	wbLayout05 = `2006-01-02T15:04:05.999999`     // Не RFC, локальная валберис
-	wbLayout06 = `2006-01-02T15:04:05.99999`      // Не RFC, локальная валберис
-	wbLayout07 = `2006-01-02T15:04:05.9999`       // Не RFC, локальная валберис
-	wbLayout08 = `2006-01-02T15:04:05.999`        // Не RFC, локальная валберис
-	wbLayout09 = `2006-01-02T15:04:05.99`         // Не RFC, локальная валберис
-	wbLayout10 = `2006-01-02T15:04:05.9`          // Не RFC, локальная валберис
-	wbLayout11 = `2006-01-02T15:04:05.999999999Z` // Не RFC, локальная валберис
-	wbLayout12 = `2006-01-02T15:04:05.99999999Z`  // Не RFC, локальная валберис
-	wbLayout13 = `2006-01-02T15:04:05.9999999Z`   // Не RFC, локальная валберис
-	wbLayout14 = `2006-01-02T15:04:05.999999Z`    // Не RFC, локальная валберис
-	wbLayout15 = `2006-01-02T15:04:05.99999Z`     // Не RFC, локальная валберис
-	wbLayout16 = `2006-01-02T15:04:05.9999Z`      // Не RFC, локальная валберис
-	wbLayout17 = `2006-01-02T15:04:05.999Z`       // Не RFC, локальная валберис
-	wbLayout18 = `2006-01-02T15:04:05.99Z`        // Не RFC, локальная валберис
-	wbLayout19 = `2006-01-02T15:04:05.9Z`         // Не RFC, локальная валберис
-	wbLayout20 = `2006-01-02T15:04:05`            // Не RFC, локальная валберис
-	wbLayout21 = `2006-01-02T15:04:05Z`           // Не RFC, локальная валберис
-	wbLayout22 = `2006-01-02`                     // Не RFC, локальная валберис
+	wbLayout00 = time.RFC3339Nano                 // RFC3339 с указанием таймзоны и наносекундами
+	wbLayout01 = time.RFC3339                     // RFC3339 с указанием таймзоны
+	wbLayout02 = `2006-01-02T15:04:05.999999999`  // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout03 = `2006-01-02T15:04:05.99999999`   // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout04 = `2006-01-02T15:04:05.9999999`    // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout05 = `2006-01-02T15:04:05.999999`     // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout06 = `2006-01-02T15:04:05.99999`      // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout07 = `2006-01-02T15:04:05.9999`       // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout08 = `2006-01-02T15:04:05.999`        // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout09 = `2006-01-02T15:04:05.99`         // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout10 = `2006-01-02T15:04:05.9`          // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout11 = `2006-01-02T15:04:05.999999999Z` // Не RFC, UTC
+	wbLayout12 = `2006-01-02T15:04:05.99999999Z`  // Не RFC, UTC
+	wbLayout13 = `2006-01-02T15:04:05.9999999Z`   // Не RFC, UTC
+	wbLayout14 = `2006-01-02T15:04:05.999999Z`    // Не RFC, UTC
+	wbLayout15 = `2006-01-02T15:04:05.99999Z`     // Не RFC, UTC
+	wbLayout16 = `2006-01-02T15:04:05.9999Z`      // Не RFC, UTC
+	wbLayout17 = `2006-01-02T15:04:05.999Z`       // Не RFC, UTC
+	wbLayout18 = `2006-01-02T15:04:05.99Z`        // Не RFC, UTC
+	wbLayout19 = `2006-01-02T15:04:05.9Z`         // Не RFC, UTC
+	wbLayout20 = `2006-01-02T15:04:05`            // Не RFC, локальная валберис (wildberriesLocalLocation)
+	wbLayout21 = `2006-01-02T15:04:05Z`           // Не RFC, UTC
+	wbLayout22 = `2006-01-02`                     // Не RFC, локальная валберис (wildberriesLocalLocation)
 )
 
 // WildberriesTimezoneLocal В соответствии с ответом технической поддержки валберис,
@@ -88,9 +90,9 @@ func (wbt WildberriesTime) MarshalJSON() (ret []byte, err error) {
 		return
 	}
 	ret = make([]byte, 0, len(time.RFC3339Nano)+2)
-	ret = append(ret, '"')
+	ret = append(ret, quoteTime)
 	ret = append(ret, tmp...)
-	ret = append(ret, '"')
+	ret = append(ret, quoteTime)
 
 	return
 }
@@ -110,12 +112,14 @@ func (wbt *WildberriesTime) UnmarshalJSON(data []byte) (err error) {
 
 	wbt.src = make([]byte, len(data))
 	_ = copy(wbt.src, data)
-	src = strings.Trim(string(data), `"`)
+	src = strings.Trim(string(data), string(quoteTime))
 	// Попытка распарсить дату
 	for n = range formats {
 		switch wbt.fmt = formats[n]; n {
 		case 0, 1:
 			wbt.obj, err = time.Parse(wbt.fmt, src)
+		case 11, 12, 13, 14, 15, 16, 17, 18, 19, 21:
+			wbt.obj, err = time.ParseInLocation(wbt.fmt, src, time.UTC)
 		default:
 			wbt.obj, err = time.ParseInLocation(wbt.fmt, src, WildberriesTimezoneLocal)
 		}

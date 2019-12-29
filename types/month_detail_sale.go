@@ -1,8 +1,5 @@
 package types
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-
 // MonthDetailSale Структура данных отчёта валберис "Ежемесячный отчет о продажах по реализации"
 type MonthDetailSale struct {
 	ReportID                 uint64          `json:"realizationreport_id"`        // Номер отчёта
