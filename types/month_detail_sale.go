@@ -4,16 +4,16 @@ package types
 type MonthDetailSale struct {
 	ReportID                 uint64          `json:"realizationreport_id"`        // Номер отчёта
 	SupplierContractCode     string          `json:"suppliercontract_code"`       // Договор
-	RowID                    uint64          `json:"rrd_id"`                      // Номер строки отчёта
+	RowReportID              uint64          `json:"rrd_id"`                      // Уникальный идентификатор номера строки отчёта
 	IncomeID                 uint64          `json:"gi_id"`                       // Номер поставки
 	Name                     string          `json:"subject_name"`                // Предмет или название товара
 	WbID                     uint64          `json:"nm_id"`                       // Код валберис, он же номенклатура валберис, он же код 1С, он же артикул
 	BrandName                string          `json:"brand_name"`                  // Бренд
 	VendorCode               string          `json:"sa_name"`                     // Артикул товара поставщика
-	TsName                   string          `json:"ts_name"`                     // Размер
+	TechSize                 string          `json:"ts_name"`                     // Технический размер
 	Barcode                  string          `json:"barcode"`                     // Штрихкод
 	DocTypeName              string          `json:"doc_type_name"`               // Тип документа
-	Quantity                 uint64          `json:"quantity"`                    // Количество
+	Quantity                 int64           `json:"quantity"`                    // Количество
 	Nds                      float64         `json:"nds"`                         // Ставка НДС
 	CostAmount               float64         `json:"cost_amount"`                 // Себестоимость, сумма
 	RetailPrice              float64         `json:"retail_price"`                // Цена розничная

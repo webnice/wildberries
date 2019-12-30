@@ -1,6 +1,7 @@
 package types
 
-// Order Структура данных отчёта валберис "Заказы"
+// Order Структура данных отчёта валберис "Заказы".
+// totalPrice*(100-discountPercent)/100= pricewithdisc (как и Методах сервиса. Продажи)
 type Order struct {
 	ID              uint64          `json:"number"`          // Уникальный идентификатор заказа
 	CreateAt        WildberriesTime `json:"date"`            // Дата заказа
@@ -8,7 +9,7 @@ type Order struct {
 	VendorCode      string          `json:"supplierArticle"` // Артикул товара поставщика
 	TechSize        string          `json:"techSize"`        // Технический размер
 	Barcode         string          `json:"barcode"`         // Штрихкод
-	Quantity        uint64          `json:"quantity"`        // Количество
+	Quantity        int64           `json:"quantity"`        // Количество
 	Price           float64         `json:"totalPrice"`      // Цена товара из УПД
 	DiscountPercent float64         `json:"discountPercent"` // Согласованная итоговая скидка в процентах
 	WarehouseName   string          `json:"warehouseName"`   // Название склада отгрузки товара
@@ -19,5 +20,5 @@ type Order struct {
 	Name            string          `json:"subject"`         // Предмет или название товара
 	Category        string          `json:"category"`        // Категория
 	BrandName       string          `json:"brand"`           // Бренд
-	IsCancel        bool            `json:"isCancel"`        // ???
+	IsCancel        bool            `json:"isCancel"`        // Отменённый заказ
 }

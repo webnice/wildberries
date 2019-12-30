@@ -1,14 +1,17 @@
 package types
 
-// Sale Структура данных отчёта валберис "Продажи"
+// Sale Структура данных отчёта валберис "Продажи".
+// возвраты - количество/цена со знаком минус.
+// Формула вычисления pricewithdisc:
+// Pricewithdisc = totalprice*((100 – discountPercent)/100 ) *((100 – promoCodeDiscount)/100 ) *((100 – spp)/100 )
 type Sale struct {
-	ID                string          `json:"number"`            // Номер документа
+	Number            string          `json:"number"`            // Номер документа
 	CreateAt          WildberriesTime `json:"date"`              // Дата продажи
 	ChangeAt          WildberriesTime `json:"lastChangeDate"`    // Дата и время последнего обновления информации отчёта в сервисе
 	VendorCode        string          `json:"supplierArticle"`   // Артикул товара поставщика
 	TechSize          string          `json:"techSize"`          // Технический размер
 	Barcode           string          `json:"barcode"`           // Штрихкод
-	Quantity          uint64          `json:"quantity"`          // Количество
+	Quantity          int64           `json:"quantity"`          // Количество, если меньше 0 - возврат
 	Price             float64         `json:"totalPrice"`        // Цена товара из УПД
 	DiscountPercent   float64         `json:"discountPercent"`   // Согласованная итоговая скидка в процентах
 	IsSupply          bool            `json:"isSupply"`          // Договор поставки
