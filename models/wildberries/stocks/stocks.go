@@ -12,8 +12,6 @@ import (
 	wildberriesTypes "github.com/webnice/wildberries/types"
 
 	"gopkg.in/webnice/transport.v2/request"
-	"gopkg.in/webnice/web.v1/header"
-	"gopkg.in/webnice/web.v1/mime"
 )
 
 // New creates a new object and return interface
@@ -64,10 +62,15 @@ func (stk *impl) getFrom(fromAt ...time.Time) (ret time.Time) {
 	return
 }
 
-// Report Load report data from the service.
-// If not set the fromAt parameter, then the data will be loaded for the current day
-// or starting from the date and time set by the From function
-func (stk *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Stock, err error) {
+// UntilDone Configures repeated requests with a progressive timeout until a
+// response is successfully received from the server, but not more than retryMax requests
+func (stk *impl) UntilDone(retryTimeout time.Duration, retryMax uint) Interface {
+	stk.retryTimeout, stk.retryMax = retryTimeout, retryMax
+	return stk
+}
+
+// Выполнение запроса к серверу, получение и разбор результата
+func (stk *impl) request(fromAt ...time.Time) (statusCode int, ret []*wildberriesTypes.Stock, err error) {
 	const (
 		urn         = `%s/stocks`
 		keyDate     = `dateFrom`
@@ -92,13 +95,48 @@ func (stk *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Stock, err
 		keyApi, url.QueryEscape(stk.apiKey),
 	)
 	// Создание запроса
-	req = stk.com.NewRequestBaseJSON(uri.String(), stk.com.Transport().Method().Get())
+	req = stk.com.RequestJSON(stk.com.NewRequest(uri.String(), stk.com.Transport().Method().Get()))
 	defer stk.com.Transport().RequestPut(req)
-	req.Header().Add(header.ContentType, mime.ApplicationJSONCharsetUTF8)
 	// Выполнение запроса
-	if err = stk.com.RequestResponseJSON(req, &ret); err != nil {
+	if statusCode, err = stk.com.RequestResponseJSON(stk.ctx, req, &ret); err != nil {
 		err = fmt.Errorf("service response error: %s", err)
 		return
+	}
+
+	return
+}
+
+// Report Load report data from the service.
+// If not set the fromAt parameter, then the data will be loaded for the current day
+// or starting from the date and time set by the From function
+func (stk *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Stock, err error) {
+	var (
+		statusCode int
+		n          uint
+	)
+
+	for {
+		n++
+		statusCode, ret, err = stk.request(fromAt...)
+		// Успешный ответ
+		if err == nil && (statusCode > 199 && statusCode < 300) {
+			break
+		}
+		// Если выключены повторы или попытки кончились
+		if stk.retryTimeout == 0 || stk.retryMax <= n {
+			break
+		}
+		// Если было выполнено прерывание через контекст
+		if err = stk.ctx.Err(); err != nil {
+			break
+		}
+		// Ожидание прерывания или таймаута между повторами
+		select {
+		case <-time.After(stk.retryTimeout * time.Duration(n)):
+		case <-stk.ctx.Done():
+			err = stk.ctx.Err()
+			break
+		}
 	}
 
 	return

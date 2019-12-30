@@ -4,6 +4,7 @@ package communication
 //import "gopkg.in/webnice/log.v2"
 import (
 	"bytes"
+	"context"
 	"time"
 
 	"gopkg.in/webnice/transport.v2"
@@ -49,20 +50,23 @@ type Interface interface {
 	// Transport Готовый к использованию интерфейс коммуникации с сервером
 	Transport() transport.Interface
 
-	// NewRequestBaseJSON Базовый метод создания объекта запроса
-	NewRequestBaseJSON(uri string, mtd methods.Value) (ret request.Interface)
+	// NewRequest Базовый метод создания объекта запроса
+	NewRequest(uri string, mtd methods.Value) (ret request.Interface)
+
+	// RequestJSON Подготовка запроса для получения JSON ответа
+	RequestJSON(req request.Interface) (ret request.Interface)
 
 	// RequestResponse Выполнение запроса, ожидание и получение результата
-	RequestResponse(req request.Interface) (ret response.Interface, err error)
+	RequestResponse(ctx context.Context, req request.Interface) (ret response.Interface, err error)
 
 	// RequestResponseStatusCode Выполнение запроса, ожидание и получение результата в виде HTTP статуса
-	RequestResponseStatusCode(req request.Interface) (ret int, err error)
+	RequestResponseStatusCode(ctx context.Context, req request.Interface) (statusCode int, err error)
 
 	// RequestResponsePlainText Выполнение запроса, ожидание и получение результата в виде текста
-	RequestResponsePlainText(req request.Interface) (ret *bytes.Buffer, err error)
+	RequestResponsePlainText(ctx context.Context, req request.Interface) (ret *bytes.Buffer, statusCode int, err error)
 
 	// RequestResponseJSON Выполнение запроса, ожидание и получение результата в виде JSON
-	RequestResponseJSON(req request.Interface, data interface{}) (err error)
+	RequestResponseJSON(ctx context.Context, req request.Interface, data interface{}) (statusCode int, err error)
 
 	// ERRORS
 

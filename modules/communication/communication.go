@@ -4,7 +4,9 @@ package communication
 //import "gopkg.in/webnice/log.v2"
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"runtime"
 	"strings"
 
 	"gopkg.in/webnice/transport.v2"
@@ -13,6 +15,7 @@ import (
 	"gopkg.in/webnice/transport.v2/request"
 	"gopkg.in/webnice/transport.v2/response"
 	"gopkg.in/webnice/web.v1/header"
+	"gopkg.in/webnice/web.v1/mime"
 	"gopkg.in/webnice/web.v1/status"
 )
 
@@ -21,11 +24,16 @@ func New() Interface {
 	var com = &impl{
 		singleton: newTransport(),
 	}
+	runtime.SetFinalizer(com, destructor)
 	return com
 }
 
-// Errors Ошибки известного состояни, которые могут вернуть функции пакета
-func (com *impl) Errors() *Error { return Errors() }
+// Деструктор
+func destructor(item *impl) {
+	// Остановка пула воркеров, ожидание завершения всех запросов, закрытие каналов
+	item.singleton.Done()
+	item.singleton = nil
+}
 
 func newTransport() transport.Interface {
 	return transport.New().
@@ -37,32 +45,47 @@ func newTransport() transport.Interface {
 		RequestPoolSize(defaultRequestPoolSize)                              // Размер пула воркеров готовых для выполнения запросов к хостам
 }
 
+// Errors Ошибки известного состояни, которые могут вернуть функции пакета
+func (com *impl) Errors() *Error { return Errors() }
+
 // Transport Готовый к использованию интерфейс коммуникации с сервером
 func (com *impl) Transport() transport.Interface { return com.singleton }
 
-// NewRequestBaseJSON Базовый метод создания объекта запроса
-func (com *impl) NewRequestBaseJSON(uri string, mtd methods.Value) (ret request.Interface) {
+// NewRequest Базовый метод создания объекта запроса
+func (com *impl) NewRequest(uri string, mtd methods.Value) (ret request.Interface) {
 	ret = com.Transport().RequestGet().
-		Accept(AcceptJSON).
-		AcceptEncoding(AcceptEncoding).
 		AcceptLanguage(AcceptLanguage).
 		UserAgent(UserAgent).
 		Method(mtd).
 		URL(uri)
+
+	return
+}
+
+// RequestJSON Подготовка запроса для получения JSON ответа
+func (com *impl) RequestJSON(req request.Interface) (ret request.Interface) {
+	ret = req.
+		Accept(AcceptJSON).
+		AcceptEncoding(AcceptEncoding)
 	ret.Header().Add(header.CacheControl, CacheControl)
+	req.Header().Add(header.ContentType, mime.ApplicationJSONCharsetUTF8)
 
 	return
 }
 
 // RequestResponse Выполнение запроса, ожидание и получение результата
-func (com *impl) RequestResponse(req request.Interface) (ret response.Interface, err error) {
+func (com *impl) RequestResponse(ctx context.Context, req request.Interface) (ret response.Interface, err error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	// DEBUG
 	//req.DebugFunc(func(d []byte) { log.Debug(string(d)) })
 	// DEBUG
 	// Выполнение запроса
 	com.Transport().Do(req)
 	// Ожидание ответа
-	if err = req.Done().Error(); err != nil {
+	if err = req.DoneWithContext(ctx).
+		Error(); err != nil {
 		err = fmt.Errorf("execute request error: %s", err)
 		return
 	}
@@ -88,13 +111,14 @@ func (com *impl) RequestResponse(req request.Interface) (ret response.Interface,
 }
 
 // RequestResponseStatusCode Выполнение запроса, ожидание и получение результата в виде HTTP статуса
-func (com *impl) RequestResponseStatusCode(req request.Interface) (ret int, err error) {
+func (com *impl) RequestResponseStatusCode(ctx context.Context, req request.Interface) (statusCode int, err error) {
 	var rsp response.Interface
 
-	if rsp, err = com.RequestResponse(req); err != nil {
+	if rsp, err = com.
+		RequestResponse(ctx, req); err != nil {
 		return
 	}
-	ret = rsp.StatusCode()
+	statusCode = rsp.StatusCode()
 	// DEBUG
 	//req.Response().Content().BackToBegin()
 	//log.Debug(req.Response().Content().String())
@@ -104,16 +128,17 @@ func (com *impl) RequestResponseStatusCode(req request.Interface) (ret int, err 
 }
 
 // RequestResponsePlainText Выполнение запроса, ожидание и получение результата в виде текста
-func (com *impl) RequestResponsePlainText(req request.Interface) (ret *bytes.Buffer, err error) {
+func (com *impl) RequestResponsePlainText(ctx context.Context, req request.Interface) (ret *bytes.Buffer, statusCode int, err error) {
 	var (
 		rsp response.Interface
 		cnt content.Interface
 	)
 
-	if rsp, err = com.RequestResponse(req); err != nil {
+	if rsp, err = com.
+		RequestResponse(ctx, req); err != nil {
 		return
 	}
-	ret, cnt = &bytes.Buffer{}, rsp.Content()
+	ret, statusCode, cnt = &bytes.Buffer{}, rsp.StatusCode(), rsp.Content()
 	if strings.EqualFold(rsp.Header().Get(header.ContentEncoding), EncodingGzip) {
 		cnt = cnt.UnGzip()
 	}
@@ -130,16 +155,17 @@ func (com *impl) RequestResponsePlainText(req request.Interface) (ret *bytes.Buf
 }
 
 // RequestResponseJSON Выполнение запроса, ожидание и получение результата в виде JSON
-func (com *impl) RequestResponseJSON(req request.Interface, data interface{}) (err error) {
+func (com *impl) RequestResponseJSON(ctx context.Context, req request.Interface, data interface{}) (statusCode int, err error) {
 	var (
 		rsp response.Interface
 		cnt content.Interface
 	)
 
-	if rsp, err = com.RequestResponse(req); err != nil {
+	if rsp, err = com.
+		RequestResponse(ctx, req); err != nil {
 		return
 	}
-	cnt = rsp.Content()
+	cnt, statusCode = rsp.Content(), rsp.StatusCode()
 	if strings.EqualFold(rsp.Header().Get(header.ContentEncoding), EncodingGzip) {
 		cnt = cnt.UnGzip()
 	}

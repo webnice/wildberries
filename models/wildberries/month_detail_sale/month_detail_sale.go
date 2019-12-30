@@ -13,8 +13,6 @@ import (
 	wildberriesTypes "github.com/webnice/wildberries/types"
 
 	"gopkg.in/webnice/transport.v2/request"
-	"gopkg.in/webnice/web.v1/header"
-	"gopkg.in/webnice/web.v1/mime"
 )
 
 // New creates a new object and return interface
@@ -65,14 +63,19 @@ func (mds *impl) getFrom(fromAt ...time.Time) (ret time.Time) {
 	return
 }
 
-// Report Load report data from the service.
-// If not set the fromAt parameter, then the data will be loaded for the current day
-// or starting from the date and time set by the From function
-func (mds *impl) Report(
+// UntilDone Configures repeated requests with a progressive timeout until a
+// response is successfully received from the server, but not more than retryMax requests
+func (mds *impl) UntilDone(retryTimeout time.Duration, retryMax uint) Interface {
+	mds.retryTimeout, mds.retryMax = retryTimeout, retryMax
+	return mds
+}
+
+// Выполнение запроса к серверу, получение и разбор результата
+func (mds *impl) request(
 	rowID uint64,
 	limit uint64,
 	fromAt ...time.Time,
-) (ret []*wildberriesTypes.MonthDetailSale, err error) {
+) (statusCode int, ret []*wildberriesTypes.MonthDetailSale, err error) {
 	const (
 		urn            = `%s/reportDetailMart`
 		keyDate        = `dateFrom`
@@ -106,13 +109,52 @@ func (mds *impl) Report(
 		uri.RawQuery += fmt.Sprintf(rawQueryAddFmt, keyLimit, strconv.FormatUint(limit, 10))
 	}
 	// Создание запроса
-	req = mds.com.NewRequestBaseJSON(uri.String(), mds.com.Transport().Method().Get())
+	req = mds.com.RequestJSON(mds.com.NewRequest(uri.String(), mds.com.Transport().Method().Get()))
 	defer mds.com.Transport().RequestPut(req)
-	req.Header().Add(header.ContentType, mime.ApplicationJSONCharsetUTF8)
 	// Выполнение запроса
-	if err = mds.com.RequestResponseJSON(req, &ret); err != nil {
+	if statusCode, err = mds.com.RequestResponseJSON(mds.ctx, req, &ret); err != nil {
 		err = fmt.Errorf("service response error: %s", err)
 		return
+	}
+
+	return
+}
+
+// Report Load report data from the service.
+// If not set the fromAt parameter, then the data will be loaded for the current day
+// or starting from the date and time set by the From function
+func (mds *impl) Report(
+	rowID uint64,
+	limit uint64,
+	fromAt ...time.Time,
+) (ret []*wildberriesTypes.MonthDetailSale, err error) {
+	var (
+		statusCode int
+		n          uint
+	)
+
+	for {
+		n++
+		statusCode, ret, err = mds.request(rowID, limit, fromAt...)
+		// Успешный ответ
+		if err == nil && (statusCode > 199 && statusCode < 300) {
+			break
+		}
+		// Если выключены повторы или попытки кончились
+		if mds.retryTimeout == 0 || mds.retryMax <= n {
+			break
+		}
+		// Если было выполнено прерывание через контекст
+		if err = mds.ctx.Err(); err != nil {
+			break
+		}
+		// Ожидание прерывания или таймаута между повторами
+		select {
+		case <-time.After(mds.retryTimeout * time.Duration(n)):
+		case <-mds.ctx.Done():
+			err = mds.ctx.Err()
+			break
+		}
 	}
 
 	return

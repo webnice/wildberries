@@ -12,8 +12,6 @@ import (
 	wildberriesTypes "github.com/webnice/wildberries/types"
 
 	"gopkg.in/webnice/transport.v2/request"
-	"gopkg.in/webnice/web.v1/header"
-	"gopkg.in/webnice/web.v1/mime"
 )
 
 // New creates a new object and return interface
@@ -66,10 +64,15 @@ func (inc *impl) getFrom(fromAt ...time.Time) (ret time.Time) {
 	return
 }
 
-// Report Load report data from the service.
-// If not set the fromAt parameter, then the data will be loaded for the current day
-// or starting from the date and time set by the From function
-func (inc *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Income, err error) {
+// UntilDone Configures repeated requests with a progressive timeout until a
+// response is successfully received from the server, but not more than retryMax requests
+func (inc *impl) UntilDone(retryTimeout time.Duration, retryMax uint) Interface {
+	inc.retryTimeout, inc.retryMax = retryTimeout, retryMax
+	return inc
+}
+
+// Выполнение запроса к серверу, получение и разбор результата
+func (inc *impl) request(fromAt ...time.Time) (statusCode int, ret []*wildberriesTypes.Income, err error) {
 	const (
 		urn         = `%s/incomes`
 		keyDate     = `dateFrom`
@@ -94,13 +97,48 @@ func (inc *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Income, er
 		keyApi, url.QueryEscape(inc.apiKey),
 	)
 	// Создание запроса
-	req = inc.com.NewRequestBaseJSON(uri.String(), inc.com.Transport().Method().Get())
+	req = inc.com.RequestJSON(inc.com.NewRequest(uri.String(), inc.com.Transport().Method().Get()))
 	defer inc.com.Transport().RequestPut(req)
-	req.Header().Add(header.ContentType, mime.ApplicationJSONCharsetUTF8)
 	// Выполнение запроса
-	if err = inc.com.RequestResponseJSON(req, &ret); err != nil {
+	if statusCode, err = inc.com.RequestResponseJSON(inc.ctx, req, &ret); err != nil {
 		err = fmt.Errorf("service response error: %s", err)
 		return
+	}
+
+	return
+}
+
+// Report Load report data from the service.
+// If not set the fromAt parameter, then the data will be loaded for the current day
+// or starting from the date and time set by the From function
+func (inc *impl) Report(fromAt ...time.Time) (ret []*wildberriesTypes.Income, err error) {
+	var (
+		statusCode int
+		n          uint
+	)
+
+	for {
+		n++
+		statusCode, ret, err = inc.request(fromAt...)
+		// Успешный ответ
+		if err == nil && (statusCode > 199 && statusCode < 300) {
+			break
+		}
+		// Если выключены повторы или попытки кончились
+		if inc.retryTimeout == 0 || inc.retryMax <= n {
+			break
+		}
+		// Если было выполнено прерывание через контекст
+		if err = inc.ctx.Err(); err != nil {
+			break
+		}
+		// Ожидание прерывания или таймаута между повторами
+		select {
+		case <-time.After(inc.retryTimeout * time.Duration(n)):
+		case <-inc.ctx.Done():
+			err = inc.ctx.Err()
+			break
+		}
 	}
 
 	return
